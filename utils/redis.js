@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 
 const redis = require('redis');
 import { createClient } from 'redis';
@@ -7,84 +6,34 @@ import { createClient } from 'redis';
 class RedisClient{
     constructor(client) {
         this.client = client || createClient();
-        this.connected = false
+        this.connected = false // on initial, client not connected
         this.client.on('connect', () => {
             this.connected = true
-            console.log('Redis succesfully connected to the server');
+            console.log('Redis succesfully connected to the server'); // this happens when a successful connection has taken place
         });
         this.client.on('error', () => {
             this.connected = false
-            console.log('Redis failed to connect to the server');
+            console.log('Redis failed to connect to the server'); // failed connection
         });
     }
     isAlive() {
-        return this.client.connected;
+        if (this.client.connected) {
+            return true;
+        } else {
+            return false;
+        }
     }
-    async function() {
-        
+    async getRedisValue(key) {
+        const getAsync = promisify(this.client.get).bind(this.client); 
+        const value = await getAsync(key);
+        return value;
+    }
+    async setRedisValue(key, value, duration) {
+        this.client.setex(key, duration, value);
+    }
+    async delRedisValue(key) {
+        this.client.del(key);
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // function isAlive() {
-        //     const client = createClient().on('error', (err) => 
-        //         console.log('Redis client has not connected to the server', err.message)
-        // )
-        // console.log('Redis client has connected to the server')
-        // }
+export default RedisClient; // export the class
