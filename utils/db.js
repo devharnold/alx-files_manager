@@ -30,23 +30,3 @@ class DBClient {
 }
 
 export default DBClient;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// const { mongoClient } = require('mongodb');
-// 
-// const url = 'mongodb://localhost:27017';
-// const client = new MongoClient(url);
-// 
-// const db_name = 'files_manager';

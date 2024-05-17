@@ -1,26 +1,38 @@
-const express = require('express');
-const router = express.Router();
-const crypto = require('crypto');
+import sha1 from 'sha1';
+import Queue from 'bull/lib/queue';
+import dbClient from '../utils/db';
 
-router.post('/status', (req, res) => {
-    const { email, password } = res.body;
-    if(!email) {
-        res.status(400).send({' error': 'Missing email' });
-    }
-    if(!password) {
-        res.status(400).send({ 'error': 'Missing password' });
-    }
-    try {
-        const existingUser = User.findOne({ email });
-        if(existingUser) {
-            return res.status(400).json({ error: 'Email already exists' });
+const userQueue = new Queue('email sending');
+
+export default class UserController {
+    // create a new user
+    static async postNew(req, res) {
+        const email = req.body ? req.body.email : null;
+        const password = req.body ? req.body.password : null;
+
+        if (!email) {
+            res.status(400).json({ error: 'Missing email' });
+            return;
         }
-        const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
-        const newUser = new UserActivation({ email, password: hashedPassword });
-        newUser.save();
-        res.status(201).json({ email: newUser.email, id: newUser._id });
-    } catch(error) {
-        console.error('Error creating user:', error);
-        res.status(500).json({ error: 'Internal server Error' });
+        if (!password) {
+            res.status(400).json({ error: 'Missing password' });
+            return;
+        }
+        const user = (await dbClient.usersCollection()).findOne({ email });
+        if (user) {
+            res.status(400).json({ error: 'Already exists'});
+            return;
+        }
+        const insertInfo = await (await dbClient.usersCollection())
+            .insertOne({ email, password: sha1(password) });
+        const userId = insertonInfo.insertedId.toString();
+
+        userQueue.add({ userId });
+        res.status(201).json({ email, id: userId });
     }
-})
+    // get details of the authenticated user
+    static async getMe(req, res) {
+        const { user } = req;
+        req.status(200).json({ email: user.email, id: user._id.toString() });
+    }
+}
