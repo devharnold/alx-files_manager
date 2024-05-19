@@ -17,11 +17,7 @@ class RedisClient{
         });
     }
     isAlive() {
-        if (this.client.connected) {
-            return true;
-        } else {
-            return false;
-        }
+        return this.client.connected;
     }
     async getRedisValue(key) {
         const getAsync = promisify(this.client.get).bind(this.client); 
