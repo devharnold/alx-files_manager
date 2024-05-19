@@ -1,25 +1,20 @@
-const express = require('express');
-const router = express.Router();
-const AppController = require('../controllers/AppController');
-const redisClient = require('../utils/redis');
-const dbClient = require('../utils/db');
+import redisClient from '../utils/redis';
+import dbClient from '../utils/db';
 
-//get status to return if redis and db are alive by using utils created previously
-router.get('/status', (req, res) => {
-    const redis = new redisClient();
-    const db = new dbClient();
-    const status = {
-        redis: redis.isAlive(),
-        db: db.isAlive()
+export default class AppController {
+    //get the application status
+    static getStatus(req, res) {
+        res.status(200).json({
+            redis: redisClient.isAlive(),
+            db: dbClient.isAlive(),
+        });
     }
-    res.status(200).send({ "redis": true, "db": true });
-})
 
-//get stats to return number of users and files by using utils created previously
-router.get('/stats', async (req, res) => {
-    const redis = new redisClient();
-    const db = new dbClient();
-    const users = await db.nUsers();
-    const files = await db.nFiles();
-    res.status(200).send({ "users": 12, "files": 1231 });
-})
+    //get the app stats
+    static getStats(req, res) {
+        Promise.all([dbClient.nbUsers(), dbClient.nbFiles()])
+            .then(([usersCount, filesCount]) => {
+                res.status(200).json({ users: usersCount, files: filesCount });
+            });
+    }
+}

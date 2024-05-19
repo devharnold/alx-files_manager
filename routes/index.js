@@ -1,6 +1,8 @@
-const express = require('express');
-const AppController = require('../controllers/AppController');
-const AuthController = require('../controllers/AuthController');
+import { express } from 'express';
+import AppController from '../controllers/AppController';
+import AuthController from '../controllers/AuthController';
+import UsersController from '../controllers/UsersControllers';
+
 
 const injectRoutes = (api) => {
     api.get('/status', App.AppController.getStatus);
